@@ -37,7 +37,9 @@ class TerrainManager:
         """
 
         self._dems_path = os.path.join(get_assets_path(), cfg.dems_path)
-        self._G = GenerateProceduralMoonYard(cfg.moon_yard)
+        
+        if cfg.moon_yard is not None:
+            self._G = GenerateProceduralMoonYard(cfg.moon_yard)
 
         self._stage = omni.usd.get_context().get_stage()
         self._texture_path = cfg.texture_path
@@ -272,9 +274,9 @@ class TerrainManager:
         """
         Randomizes the terrain (update mesh, collider, semantic).
         """
-
-        self._DEM, self._mask, self._craters_data = self._G.randomize()
-        self.update(update_collider=True)
+        if self._G is not None:
+            self._DEM, self._mask, self._craters_data = self._G.randomize()
+            self.update(update_collider=True)
 
     def deformTerrain(
         self, world_positions: np.ndarray, world_orientations: np.ndarray, contact_forces: np.ndarray
@@ -287,9 +289,9 @@ class TerrainManager:
             world_orientations (np.ndarray): the world orientations of the bodies.
             contact_forces (np.ndarray): the contact forces of the bodies.
         """
-
-        self._DEM, self._mask = self._G.deform(world_positions, world_orientations, contact_forces)
-        self.update(update_collider=False)
+        if self._G is not None:
+            self._DEM, self._mask = self._G.deform(world_positions, world_orientations, contact_forces)
+            self.update(update_collider=False)
 
     def loadTerrainByName(self, name: str) -> None:
         """
@@ -300,10 +302,11 @@ class TerrainManager:
         """
 
         self.loadDEMAndMask(name)
-        if self._augmentation:
-            self._DEM, self._mask, self._craters_data = self._G.augment(self._DEM, self._mask)
-        else:
-            self._G.register_terrain(self._DEM, self._mask)
+        if self._G is not None:
+            if self._augmentation:
+                self._DEM, self._mask, self._craters_data = self._G.augment(self._DEM, self._mask)
+            else:
+                self._G.register_terrain(self._DEM, self._mask)
         self.update(update_collider=True)
 
     def loadTerrainId(self, idx: int) -> None:

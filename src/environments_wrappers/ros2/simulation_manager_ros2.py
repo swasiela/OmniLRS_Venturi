@@ -19,6 +19,7 @@ from src.environments_wrappers.ros2.largescale_ros2 import ROS_LargeScaleManager
 from src.environments_wrappers.ros2.lunaryard_ros2 import ROS_LunaryardManager
 from src.environments_wrappers.ros2.robot_manager_ros2 import ROS_RobotManager
 from src.environments_wrappers.ros2.lunalab_ros2 import ROS_LunalabManager
+from src.environments_wrappers.ros2.earth_ros2 import ROS_EarthManager
 from src.configurations.procedural_terrain_confs import TerrainManagerConf
 from rclpy.executors import SingleThreadedExecutor as Executor
 from src.physics.physics_scene import PhysicsSceneManager
@@ -83,7 +84,7 @@ class ROS2_LabManagerFactory:
     def register(
         self,
         name: str,
-        lab_manager: Union[ROS_LunalabManager, ROS_LunaryardManager],
+        lab_manager: Union[ROS_LunalabManager, ROS_LunaryardManager, ROS_EarthManager],
     ) -> None:
         """
         Registers a lab manager.
@@ -99,7 +100,7 @@ class ROS2_LabManagerFactory:
         self,
         cfg: dict,
         **kwargs,
-    ) -> Union[ROS_LunalabManager, ROS_LunaryardManager]:
+    ) -> Union[ROS_LunalabManager, ROS_LunaryardManager, ROS_EarthManager]:
         """
         Returns an instance of the lab manager corresponding to the environment name.
 
@@ -120,7 +121,7 @@ ROS2_LMF = ROS2_LabManagerFactory()
 ROS2_LMF.register("Lunalab", ROS_LunalabManager)
 ROS2_LMF.register("Lunaryard", ROS_LunaryardManager)
 ROS2_LMF.register("LargeScale", ROS_LargeScaleManager)
-
+ROS2_LMF.register("Earth", ROS_EarthManager)
 
 class ROS2_SimulationManager:
     """

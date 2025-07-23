@@ -2,7 +2,7 @@ defaults:
   - environment: lunalab
   - rendering: ray_tracing
   - mode: ROS2
-  - physics: default_physics
+  - physics: moon
 
 hydra:
   output_subdir: null

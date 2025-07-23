@@ -274,7 +274,9 @@ class TerrainManagerConf:
     augmentation: bool = False
 
     def __post_init__(self):
-        self.moon_yard = MoonYardConf(**self.moon_yard)
+        
+        if self.moon_yard is not None and isinstance(self.moon_yard, dict):
+            self.moon_yard = MoonYardConf(**self.moon_yard)
 
         assert type(self.root_path) is str, "root_path must be a string"
         assert type(self.texture_path) is str, "texture_path must be a string"
