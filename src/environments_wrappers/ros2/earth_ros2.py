@@ -34,8 +34,8 @@ class ROS_EarthManager(ROS_BaseManager):
         """
 
         super().__init__(environment_cfg=environment_cfg, **kwargs)
-        self.LC = EarthController(**environment_cfg)
-        self.LC.load()
+        self.C = EarthController(**environment_cfg)
+        self.C.load()
 
         self.create_subscription(Float32, "/OmniLRS/Sun/Intensity", self.set_sun_intensity, 1)
         self.create_subscription(Pose, "/OmniLRS/Sun/Pose", self.set_sun_pose, 1)
@@ -67,7 +67,7 @@ class ROS_EarthManager(ROS_BaseManager):
             data (Float32): Intensity in percentage."""
 
         assert data.data >= 0, "The intensity must be greater than or equal to 0."
-        self.modifications.append([self.LC.set_sun_intensity, {"intensity": data.data}])
+        self.modifications.append([self.C.set_sun_intensity, {"intensity": data.data}])
 
     def set_sun_color(self, data: ColorRGBA) -> None:
         """
@@ -79,7 +79,7 @@ class ROS_EarthManager(ROS_BaseManager):
         color = [data.r, data.g, data.b]
         for c in color:
             assert 0 <= c <= 1, "The color must be between 0 and 1."
-        self.modifications.append([self.LC.set_sun_color, {"color": color}])
+        self.modifications.append([self.C.set_sun_color, {"color": color}])
 
     def set_sun_color_temperature(self, data: Float32) -> None:
         """
@@ -90,7 +90,7 @@ class ROS_EarthManager(ROS_BaseManager):
         """
 
         assert data.data >= 0, "The color temperature must be greater than or equal to 0"
-        self.modifications.append([self.LC.set_sun_color_temperature, {"temperature": data.data}])
+        self.modifications.append([self.C.set_sun_color_temperature, {"temperature": data.data}])
 
     def set_sun_angle(self, data: Float32) -> None:
         """
@@ -101,7 +101,7 @@ class ROS_EarthManager(ROS_BaseManager):
         """
 
         assert data.data >= 0, "The angle must be greater than or equal to 0"
-        self.modifications.append([self.LC.set_sun_angle, {"angle": data.data}])
+        self.modifications.append([self.C.set_sun_angle, {"angle": data.data}])
 
     def set_sun_pose(self, data: Pose) -> None:
         """
@@ -113,4 +113,4 @@ class ROS_EarthManager(ROS_BaseManager):
 
         position = [data.position.x, data.position.y, data.position.z]
         orientation = [data.orientation.w, data.orientation.y, data.orientation.z, data.orientation.x]
-        self.modifications.append([self.LC.set_sun_pose, {"position": position, "orientation": orientation}])
+        self.modifications.append([self.C.set_sun_pose, {"position": position, "orientation": orientation}])

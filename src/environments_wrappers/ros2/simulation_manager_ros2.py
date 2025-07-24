@@ -196,11 +196,11 @@ class ROS2_SimulationManager:
 
         # Preload the assets
         if cfg["environment"]["name"] == "LargeScale":
-            height, quat = self.ROSLabManager.LC.get_height_and_normal((0.0, 0.0, 0.0))
+            height, quat = self.ROSLabManager.C.get_height_and_normal((0.0, 0.0, 0.0))
             self.ROSRobotManager.RM.preload_robot_at_pose(self.world, (0, 0, height + 0.5), (1, 0, 0, 0))
         else:
             self.ROSRobotManager.RM.preload_robot(self.world)
-        self.ROSLabManager.LC.add_robot_manager(self.ROSRobotManager.RM)
+        self.ROSLabManager.C.add_robot_manager(self.ROSRobotManager.RM)
 
         for i in range(100):
             self.world.step(render=True)
@@ -231,8 +231,8 @@ class ROS2_SimulationManager:
                 self.ROSRobotManager.apply_modifications()
                 if self.enable_deformation:
                     if self.world.current_time_step_index >= (self.deform_delay * self.world.get_physics_dt()):
-                        self.ROSLabManager.LC.deform_terrain()
-                        # self.ROSLabManager.LC.applyTerramechanics()
+                        self.ROSLabManager.C.deform_terrain()
+                        # self.ROSLabManager.C.applyTerramechanics()
             if not self.ROSLabManager.monitor_thread_is_alive():
                 logger.debug("Destroying the ROS nodes")
                 self.ROSLabManager.destroy_node()

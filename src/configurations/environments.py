@@ -474,27 +474,15 @@ class EarthConf:
     Configuration for the earth.
 
     Attributes:
-        lab_length (float): The length of the lab.
-        lab_width (float): The width of the lab.
-        resolution (float): The resolution of the lab.
-        terrain_id (int): The id of the terrain.
         coordinates (Coordinates): The coordinates of the lab.
+        terrain_assets (dict): The dictionnary containing the meshes/materials pair of the terrain.
+        sun_prim (str): The prim path of the sun.
     """
 
-    lab_length: float = 20.0
-    lab_width: float = 20.0
-    resolution: float = 0.025
-    terrain_id: int = -1
     coordinates: Coordinates = dataclasses.field(default_factory=dict)
+    terrain_assets: dict = None
+    sun_prim: str = "/Earth/Sun"
 
     def __post_init__(self):
-        assert type(self.lab_length) == float, "The lab length must be a float."
-        assert type(self.lab_width) == float, "The lab width must be a float."
-        assert type(self.resolution) == float, "The resolution must be a float."
 
-        assert self.lab_length > 0.0, "The lab length must be greater than 0."
-        assert self.lab_width > 0.0, "The lab width must be greater than 0."
-        assert self.resolution > 0.0, "The resolution must be greater than 0."
-
-        self.sun_path: str = "/Earth/Sun"
         self.coordinates = Coordinates(**self.coordinates)

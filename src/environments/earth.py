@@ -12,12 +12,10 @@ import numpy as np
 import math
 import os
 
-from pxr import UsdLux, Gf
+from pxr import UsdLux, Gf, UsdShade
 
-from src.terrain_management.large_scale_terrain.pxr_utils import set_xform_ops, load_material
+from src.terrain_management.large_scale_terrain.pxr_utils import set_xform_ops, load_material, bind_material
 from src.configurations.stellar_engine_confs import SunConf
-from src.configurations.procedural_terrain_confs import TerrainManagerConf
-from src.terrain_management.terrain_manager import TerrainManager
 from src.configurations.environments import EarthConf
 from src.environments.base_env import BaseEnv
 from src.robots.robot import RobotManager
@@ -31,7 +29,6 @@ class EarthController(BaseEnv):
     def __init__(
         self,
         earth_settings: EarthConf = None,
-        terrain_manager: TerrainManagerConf = None,
         sun_settings: SunConf = None,
         **kwargs,
     ) -> None:
@@ -39,12 +36,10 @@ class EarthController(BaseEnv):
         Initializes the lab controller. This class is used to control the lab interactive elements.
         Including:
             - Sun position, intensity, radius, color.
-            - Terrains randomization or using premade DEMs.
 
         Args:
-            earth_settings (LunaryardConf): The settings of the lab.
-            terrain_manager (TerrainManagerConf): The settings of the terrain manager.
-            stellar_engine_settings (StellarEngineConf): The settings of the stellar engine.
+            earth_settings (EarthConf): The settings of the lab.
+            sun_settings (SunConf): The settings of the sun object.
             **kwargs: Arbitrary keyword arguments.
         """
 
@@ -52,10 +47,6 @@ class EarthController(BaseEnv):
         self.stage_settings = earth_settings
         self.sun_settings = sun_settings
 
-        self.T = TerrainManager(terrain_manager)
- 
-        self.dem = None
-        self.mask = None
         self.scene_name = "/Earth"
 
     def build_scene(self) -> None:
@@ -66,10 +57,10 @@ class EarthController(BaseEnv):
         # Creates an empty xform with the name earth
         earth = self.stage.DefinePrim(self.scene_name, "Xform")
         # Creates the sun
-        sun = self.stage.DefinePrim(self.sun_settings.root_path, "Xform")
+        sun = self.stage.DefinePrim(self.stage_settings.sun_prim, "Xform")
         self._sun_prim = sun.GetPrim()
         self._sun_lux: UsdLux.DistantLight = UsdLux.DistantLight.Define(
-            self.stage, os.path.join(self.sun_settings.root_path, "sun")
+            self.stage, os.path.join(self.stage_settings.sun_prim, "sun")
         )
         self._sun_lux.CreateIntensityAttr(self.sun_settings.intensity)
         self._sun_lux.CreateAngleAttr(self.sun_settings.angle)
@@ -89,7 +80,7 @@ class EarthController(BaseEnv):
 
         # Load default textures
         self.stage.DefinePrim("/Looks", "Xform")
-        load_material("Basalt", "assets/Textures/GravelStones.mdl")
+        load_material("GravelStones", "assets/Textures/GravelStones.mdl")
 
     def instantiate_scene(self) -> None:
         """
@@ -121,19 +112,11 @@ class EarthController(BaseEnv):
         # Builds the scene
         self.build_scene()
 
-        # Loads the DEM and the mask
-        self.switch_terrain(self.stage_settings.terrain_id)
+        # Loads the terrain mesh
+        self.load_terrain(self.stage_settings.terrain_assets)
        
     def add_robot_manager(self, robotManager: RobotManager) -> None:
         self.robotManager = robotManager
-
-    def load_DEM(self) -> None:
-        """
-        Loads the DEM and the mask from the TerrainManager.
-        """
-
-        self.dem = self.T.getDEM()
-        self.mask = self.T.getMask()
 
     # ==============================================================================
     # Sun control
@@ -199,20 +182,39 @@ class EarthController(BaseEnv):
     # ==============================================================================
     # Terrain control
     # ==============================================================================
-    def switch_terrain(self, flag: int = -1) -> None:
+    def load_terrain(self, terrain_assets: dict = None) -> None:
         """
-        Switches the terrain to a new DEM.
+        Load the terrain from a mesh file
 
         Args:
-            flag (int): The id of the DEM to be loaded. If negative, a random DEM is generated.
+            terrain_assets (dict): The dictionnary containing the terrain meshes and material pair.
         """
 
-        if flag < 0:
-            self.T.randomizeTerrain()
-        else:
-            self.T.loadTerrainId(flag)
+        assert terrain_assets != None, "No mesh file to load."
 
-        self.load_DEM()
+        # Get terrain prim path
+        terrain_prim_path = "/Earth/Terrain"
+
+        # Loop through all .usd/.mtl pair in the folder
+        for mesh_path, mdl_path in terrain_assets:
+            # # Define unique prim path
+            # mesh_prim_name = os.path.splitext(os.path.basename(mesh_path))[0]
+
+            # Define and reference the USD into the stage
+            mesh_prim = self.stage.DefinePrim(terrain_prim_path, "Xform")
+            mesh_prim.GetReferences().AddReference(assetPath=mesh_path)
+
+            # Create material prim
+            mat_name = os.path.splitext(os.path.basename(mdl_path))[0]
+            mat_prim_path = os.path.join("/Looks", mat_name)
+
+            print(mat_prim_path)
+    
+            # Bind the right material and load it if not already existing
+            if not self.stage.GetPrimAtPath(mat_prim_path).IsValid():
+                load_material(mat_name, mdl_path)
+
+            bind_material(self.stage, mat_prim_path, mesh_prim.GetPath())
 
     def deform_derrain(self) -> None:
         """
